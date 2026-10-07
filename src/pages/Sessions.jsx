@@ -60,7 +60,7 @@ export default function Sessions() {
                 <div className="session-top">
                   <div>
                     <div className="session-symbol">{s.symbol}</div>
-                    <div className="muted small">{s.interval} · {s.leverage}x · {s.profile} · R:R {s.targetRR ?? "auto"} · {shortId(s.sessionId)}</div>
+                    <div className="muted small">{s.interval} · {s.leverage}x · {s.profile} · R:R {s.targetRR ?? "auto"}{s.trendFilter && s.trendFilter !== "off" ? ` · trend ${s.trendFilter}` : ""} · {shortId(s.sessionId)}</div>
                   </div>
                   <div className="col-end">
                     <StateBadge state={s.state} status={s.status} />

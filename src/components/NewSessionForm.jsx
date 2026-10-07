@@ -7,7 +7,7 @@ const LEVERAGE = [1, 3, 5, 10, 25, 50, 100];
 
 export default function NewSessionForm({ onDone }) {
   const { startSession } = useData();
-  const [f, setF] = useState({ symbol: "BTCUSDT", interval: "15m", profile: "balanced", leverage: 3, aggressionMode: "rules", targetRR: "", startBalance: 1000 });
+  const [f, setF] = useState({ symbol: "BTCUSDT", interval: "15m", profile: "balanced", leverage: 3, aggressionMode: "rules", targetRR: "", trendFilter: "off", startBalance: 1000 });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -25,6 +25,7 @@ export default function NewSessionForm({ onDone }) {
         aggressionMode: f.aggressionMode,
         startBalance: Number(f.startBalance),
         ...(f.targetRR !== "" ? { targetRR: Number(f.targetRR) } : {}),
+        trendFilter: f.trendFilter,
       });
       onDone?.();
     } catch (e2) {
@@ -43,6 +44,9 @@ export default function NewSessionForm({ onDone }) {
         <label>Leverage<select value={f.leverage} onChange={set("leverage")}>{LEVERAGE.map((l) => <option key={l} value={l}>{l}x</option>)}</select></label>
         <label>Aggression control<select value={f.aggressionMode} onChange={set("aggressionMode")}><option value="rules">rules (bot adapts)</option><option value="jev">jev (JEV decides)</option><option value="fixed">fixed</option></select></label>
         <label>Target R:R <small>(blank = auto)</small><input type="number" step="0.1" min="0.8" max="4" value={f.targetRR} onChange={set("targetRR")} placeholder="auto" /></label>
+        <label>Trend filter<select value={f.trendFilter} onChange={set("trendFilter")}>
+          <option value="off">off</option><option value="ema50">EMA50 side</option><option value="stack">EMA stack aligned</option>
+        </select></label>
         <label>Start balance ($)<input type="number" min="10" value={f.startBalance} onChange={set("startBalance")} /></label>
       </div>
       <ErrorBox>{err}</ErrorBox>
