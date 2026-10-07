@@ -215,3 +215,11 @@ label.check input { width: auto; }
   .feed li .badge { grid-column: 2; justify-self: start; }
   .feed-text { grid-column: 1 / -1; }
 }
+
+/* featured sessions */
+.featured { margin: 8px 0 24px; padding: 16px; border: 1px solid var(--accent, #6b8cff); border-radius: 12px; background: color-mix(in srgb, var(--accent, #6b8cff) 6%, transparent); }
+.featured-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 12px; }
+.featured-head h2, .section-title { margin: 0; font-size: 1.05rem; }
+.section-title { margin: 8px 0 12px; }
+.session-card.is-featured { border-color: var(--accent, #6b8cff); }
+.star { color: #f5b301; margin-right: 6px; }

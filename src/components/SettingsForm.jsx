@@ -11,6 +11,7 @@ export default function SettingsForm({ session, hasPosition, onSaved }) {
     targetRR: session.targetRR ?? "",
     trendFilter: session.trendFilter ?? "off",
     minJevProb: session.minJevProb ?? "",
+    featured: session.featured === true,
     leverage: session.leverage,
     aggressionMode: session.aggressionMode ?? "rules",
     aggression: session.aggression,
@@ -25,6 +26,7 @@ export default function SettingsForm({ session, hasPosition, onSaved }) {
     e.preventDefault();
     const body = {};
     if (String(f.minJevProb) !== String(init.minJevProb)) body.minJevProb = f.minJevProb === "" ? null : Number(f.minJevProb);
+    if (f.featured !== init.featured) body.featured = f.featured;
     if (f.trendFilter !== init.trendFilter) body.trendFilter = f.trendFilter;
     if (String(f.targetRR) !== String(init.targetRR)) body.targetRR = f.targetRR === "" ? null : Number(f.targetRR);
     if (Number(f.leverage) !== Number(init.leverage)) body.leverage = Number(f.leverage);
@@ -48,6 +50,7 @@ export default function SettingsForm({ session, hasPosition, onSaved }) {
       <div className="form-grid">
         <label>Target R:R <small>(blank = auto)</small><input type="number" step="0.1" min="0.8" max="4" value={f.targetRR} onChange={set("targetRR")} placeholder="auto" /></label>
         <label>Min JEV odds % <small>(blank = none)</small><input type="number" step="1" min="0" max="95" value={f.minJevProb} onChange={set("minJevProb")} placeholder="none" /></label>
+        <label className="check"><input type="checkbox" checked={!!f.featured} onChange={(e) => setF({ ...f, featured: e.target.checked })} /> featured (watch closely)</label>
         <label>Trend filter<select value={f.trendFilter} onChange={set("trendFilter")}>
           <option value="off">off</option><option value="ema50">EMA50 side</option><option value="stack">EMA stack aligned</option>
         </select></label>
