@@ -40,7 +40,7 @@ export default function SessionDetail() {
         </div>
       </div>
       <div className="muted small">
-        Session {shortId(session.sessionId)} · {session.profile} · aggression {Math.round(session.aggression)} ({session.aggressionMode}) · target R:R {session.targetRR ?? "auto"} · trend filter {session.trendFilter ?? "off"} · started {dateTime(session.startedAt)}
+        Session {shortId(session.sessionId)} · {session.profile} · aggression {Math.round(session.aggression)} ({session.aggressionMode}) · target R:R {session.targetRR ?? "auto"} · trend filter {session.trendFilter ?? "off"} · min JEV odds {session.minJevProb != null ? `${session.minJevProb}%` : "none"} · started {dateTime(session.startedAt)}
       </div>
 
       <div className="stats-row">
