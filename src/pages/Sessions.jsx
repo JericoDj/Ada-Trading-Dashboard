@@ -6,7 +6,8 @@ import NewSessionForm from "../components/NewSessionForm.jsx";
 import { usd, signedUsd, tone, price, signedPct, shortId, ago } from "../lib/format.js";
 
 export default function Sessions() {
-  const { sessions, loading, error, stopSession, resumeSession } = useData();
+  const { sessions: all, loading, error, stopSession, resumeSession } = useData();
+  const sessions = useMemo(() => all.filter((s) => s.mode !== "live"), [all]); // live sessions have their own page
   const [showForm, setShowForm] = useState(false);
   const [showStopped, setShowStopped] = useState(false);
   const [busy, setBusy] = useState(null);

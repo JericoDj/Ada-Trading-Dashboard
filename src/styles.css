@@ -223,3 +223,15 @@ label.check input { width: auto; }
 .section-title { margin: 8px 0 12px; }
 .session-card.is-featured { border-color: var(--accent, #6b8cff); }
 .star { color: #f5b301; margin-right: 6px; }
+
+/* live trading */
+.env-badge { display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: .02em; vertical-align: middle; }
+.env-badge.testnet { color: var(--info); background: color-mix(in srgb, var(--info) 12%, transparent); border: 1px solid color-mix(in srgb, var(--info) 40%, transparent); }
+.env-badge.mainnet { color: #fff; background: var(--down); }
+.live-card { border-color: color-mix(in srgb, var(--info) 45%, var(--border)); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+.btn.danger { background: var(--down); border-color: var(--down); color: #fff; }
+.danger-zone { border: 1px solid color-mix(in srgb, var(--down) 45%, transparent); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.danger-text { color: var(--down); }
+.error-box ul { margin: 6px 0 0 18px; }
+.nav-live { margin-top: 8px; }

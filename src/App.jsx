@@ -7,6 +7,7 @@ import Sessions from "./pages/Sessions.jsx";
 import SessionDetail from "./pages/SessionDetail.jsx";
 import Shadows from "./pages/Shadows.jsx";
 import Health from "./pages/Health.jsx";
+import Live from "./pages/Live.jsx";
 
 export default function App() {
   const { token, checking } = useAuth();
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="sessions/:id" element={<SessionDetail />} />
         <Route path="shadows" element={<Shadows />} />
         <Route path="health" element={<Health />} />
+        <Route path="live" element={<Live />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

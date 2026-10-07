@@ -24,16 +24,17 @@ export default function SessionDetail() {
 
   return (
     <div className="page">
-      <Link to="/" className="muted small">← all sessions</Link>
+      <Link to={session.mode === "live" ? "/live" : "/"} className="muted small">← {session.mode === "live" ? "live trading" : "all sessions"}</Link>
       <div className="page-head">
         <h1>
           {session.symbol} <span className="muted">{session.interval} · {session.leverage}x</span>
+          {session.mode === "live" && <span className={`env-badge ${session.exchangeEnv ?? "testnet"}`}>LIVE · {session.exchangeEnv === "mainnet" ? "real money" : "testnet"}</span>}
         </h1>
         <div className="row gap">
           <StateBadge state={status?.state ?? session.state} status={session.status} />
-          <Badge kind={live.status === "live" ? "up" : "muted"}>{live.status === "live" ? "● live" : live.status}</Badge>
+          <Badge kind={live.status === "live" ? "up" : "muted"}>{live.status === "live" ? "● streaming" : live.status}</Badge>
           {running ? (
-            <button className="btn small ghost" onClick={() => confirm("Stop this session?") && stopSession(id).then(detail.reload)}>Stop</button>
+            <button className="btn small ghost" onClick={() => confirm(session.mode === "live" ? "Stop this LIVE session? An open position will be closed on Binance at market." : "Stop this session?") && stopSession(id).then(detail.reload)}>Stop</button>
           ) : (
             <button className="btn small" onClick={() => resumeSession(id).then(detail.reload)}>Resume</button>
           )}

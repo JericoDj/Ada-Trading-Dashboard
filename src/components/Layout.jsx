@@ -17,6 +17,7 @@ export default function Layout() {
           <NavLink to="/" end>Sessions</NavLink>
           <NavLink to="/shadows">Shadows &amp; calibration</NavLink>
           <NavLink to="/health">Health &amp; costs</NavLink>
+          <NavLink to="/live" className="nav-live">Live trading</NavLink>
         </nav>
         <div className="sidebar-foot">
           <NavLink to="/health" className={`health-pill ${health == null ? "" : healthy ? "ok" : "bad"}`}>
