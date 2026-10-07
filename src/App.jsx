@@ -12,6 +12,7 @@ export default function App() {
   const { token, checking } = useAuth();
   if (checking) return <div className="center"><Spinner /></div>;
   if (!token) return <Login />;
+  
   return (
     <Routes>
       <Route element={<Layout />}>
