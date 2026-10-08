@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { LiveProvider, useLive } from "../context/LiveContext.jsx";
 import { Card, Stat, Badge, StateBadge, SideBadge, Empty, ErrorBox, Spinner } from "../components/ui.jsx";
-import { usd, signedUsd, tone, price, num, shortId, ago } from "../lib/format.js";
+import { usd, signedUsd, signedPct, tone, price, num, shortId, ago, time } from "../lib/format.js";
 
 const INTERVALS = ["5m", "15m", "30m", "1h"];
 
@@ -103,7 +103,9 @@ function StatusCard() {
 
 function LiveSessions() {
   const { envSessions: liveSessions, env } = useLive();
-  const { stopSession, resumeSession } = useData();
+  const { stopSession, resumeSession, health } = useData();
+  // Sessions marked RUNNING that the server couldn't start (e.g. Binance refused something) — from /api/jev/health
+  const stuck = Object.fromEntries((health?.failing ?? []).map((f) => [f.sessionId, f]));
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState(null);
   const act = async (id, fn) => { setBusy(id); setErr(null); try { await fn(); } catch (e) { setErr(e.message); } finally { setBusy(null); } };
@@ -130,11 +132,27 @@ function LiveSessions() {
                   <div><div className="stat-label">Total P&L</div><div className={`mono ${tone(total)}`}>{signedUsd(total)}</div></div>
                   <div><div className="stat-label">Trades</div><div className="mono">{s.wins}W/{s.losses}L</div></div>
                 </div>
+                {stuck[s.sessionId] && (
+                  <div className="error-box small">
+                    Not running on the server — {stuck[s.sessionId].lastError}. Retrying automatically ({stuck[s.sessionId].attempts} attempts, next at {time(stuck[s.sessionId].nextRetryAt)}).
+                    {s.position && " The position stays protected by its stop/target orders on Binance."}
+                  </div>
+                )}
                 {s.position && (
-                  <div className="session-pos">
-                    <Badge kind={s.position.side === "LONG" ? "up" : "down"}>{s.position.side.toLowerCase()}</Badge>
-                    <span className="mono">@ {price(s.position.entryPrice)} · stop {price(s.position.stopLoss)} · target {price(s.position.takeProfit)}</span>
-                    <span className={`mono ${tone(s.position.unrealizedPnl)}`}>{signedUsd(s.position.unrealizedPnl)}</span>
+                  <>
+                    <div className="session-pos">
+                      <Badge kind={s.position.side === "LONG" ? "up" : "down"}>{s.position.side.toLowerCase()}</Badge>
+                      <span className="mono">@ {price(s.position.entryPrice)} → {s.position.price != null ? price(s.position.price) : "…"}</span>
+                      <span className={`mono ${tone(s.position.unrealizedPnl)}`}>
+                        {s.position.unrealizedPnl != null ? `${signedUsd(s.position.unrealizedPnl)} (${signedPct(s.position.unrealizedRoePct)})` : "waiting for price"}
+                      </span>
+                    </div>
+                    <div className="muted small mono">stop {price(s.position.stopLoss)} · target {price(s.position.takeProfit)} · liq. {price(s.position.liquidationPrice)}</div>
+                  </>
+                )}
+                {!s.position && s.watching && (
+                  <div className="session-pos muted small">
+                    Watching a {s.watching.side.toLowerCase()} plan · stop {price(s.watching.stopLoss)} · target {price(s.watching.takeProfit)}
                   </div>
                 )}
               </Link>
