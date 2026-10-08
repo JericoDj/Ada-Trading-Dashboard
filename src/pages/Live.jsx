@@ -7,9 +7,15 @@ import { usd, signedUsd, tone, price, num, shortId, ago } from "../lib/format.js
 
 const INTERVALS = ["5m", "15m", "30m", "1h"];
 
-export default function Live() {
+const COPY = {
+  testnet: { title: "Demo sessions", blurb: "Binance Demo Trading (testnet) — fake money, real exchange behaviour." },
+  mainnet: { title: "Live sessions", blurb: "Binance USDⓈ-M Futures with real money." },
+};
+
+/** Demo (env="testnet") or Live (env="mainnet") trading page. */
+export default function Live({ env = "testnet" }) {
   return (
-    <LiveProvider>
+    <LiveProvider env={env} key={env}>
       <LivePage />
     </LiveProvider>
   );
@@ -20,16 +26,46 @@ function EnvBadge({ env }) {
   return <span className={`env-badge ${env}`}>{env === "mainnet" ? "MAINNET · real money" : "TESTNET · fake money"}</span>;
 }
 
+function KeyPicker() {
+  const { keys, selected, setCredentialId, env } = useLive();
+  if (!keys.length) return null;
+  return (
+    <label className="key-picker">API key
+      <select value={selected?.id ?? ""} onChange={(e) => setCredentialId(e.target.value)}>
+        {keys.map((k) => <option key={k.id} value={k.id}>{k.name} ({k.keyHint})</option>)}
+      </select>
+      <Link to="/keys" className="small">manage</Link>
+      {env === "mainnet" && <span className="small down">real money</span>}
+    </label>
+  );
+}
+
 function LivePage() {
-  const { status, error } = useLive();
+  const { env, credentials, keys, status, error } = useLive();
+  const copy = COPY[env];
   return (
     <div className="page">
       <div className="page-head">
-        <h1>Live trading <EnvBadge env={status?.environment} /></h1>
+        <div>
+          <h1>{copy.title} <EnvBadge env={env} /></h1>
+          <p className="muted small">{copy.blurb}</p>
+        </div>
+        <KeyPicker />
       </div>
       <ErrorBox>{error}</ErrorBox>
-      {!status && !error && <div className="center"><Spinner /></div>}
-      {status && (
+      {credentials == null && <div className="center"><Spinner /></div>}
+      {credentials != null && !keys.length && (
+        <Card title={`No ${env === "testnet" ? "demo" : "live"} API key yet`}>
+          <p className="muted">
+            {env === "testnet"
+              ? "Create a key on Binance Demo Trading (demo.binance.com → API Management, HMAC) and save it here as a demo key."
+              : "Save a real-account Binance API key (Futures enabled, withdrawals disabled, IP-restricted) as a live key."}
+          </p>
+          <Link className="btn primary" to="/keys">Add an API key</Link>
+        </Card>
+      )}
+      {keys.length > 0 && !status && !error && <div className="center"><Spinner /></div>}
+      {keys.length > 0 && status && (
         <>
           <StatusCard />
           <LiveSessions />
@@ -45,14 +81,14 @@ function LivePage() {
 }
 
 function StatusCard() {
-  const { status: s } = useLive();
+  const { status: s, selected, account } = useLive();
   const a = s.account;
   return (
     <>
       <div className="stats-row">
-        <Stat label="Status" value={s.ready ? "Ready" : "Not ready"} tone={s.ready ? "up" : "down"} sub={s.enabled ? "live trading enabled" : "LIVE_TRADING_ENABLED is off"} />
+        <Stat label={`Status · ${selected?.name ?? ""}`} value={s.ready ? "Ready" : "Not ready"} tone={s.ready ? "up" : "down"} sub={s.enabled ? `key ${selected?.keyHint ?? ""}` : "LIVE_TRADING_ENABLED is off"} />
         <Stat label="USDT available" value={a ? usd(a.usdtAvailable) : "—"} sub={a ? `wallet ${usd(a.usdtWallet)}` : "no account access"} />
-        <Stat label="Unrealized P&L" value={a ? signedUsd(a.unrealizedPnl) : "—"} tone={tone(a?.unrealizedPnl)} sub={`${s.runningSessions} live session(s) running`} />
+        <Stat label="Unrealized P&L" value={account ? signedUsd(account.usdt.unrealizedPnl) : "—"} tone={tone(account?.usdt.unrealizedPnl)} sub={`${s.runningSessions} session(s) running on this key`} />
         <Stat label="Realized today" value={signedUsd(s.realizedTodayUsd)} tone={tone(s.realizedTodayUsd)} sub={`daily limit −${usd(s.limits.dailyLossUsd, 0)}`} />
       </div>
       {s.problems.length > 0 && (
@@ -66,15 +102,15 @@ function StatusCard() {
 }
 
 function LiveSessions() {
-  const { liveSessions } = useLive();
+  const { envSessions: liveSessions, env } = useLive();
   const { stopSession, resumeSession } = useData();
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState(null);
   const act = async (id, fn) => { setBusy(id); setErr(null); try { await fn(); } catch (e) { setErr(e.message); } finally { setBusy(null); } };
   return (
-    <Card title="Live sessions">
+    <Card title={env === "testnet" ? "Demo sessions" : "Live sessions"}>
       <ErrorBox>{err}</ErrorBox>
-      {!liveSessions.length && <Empty>No live sessions yet. Check the coin with the preflight below, then start one.</Empty>}
+      {!liveSessions.length && <Empty>No {env === "testnet" ? "demo" : "live"} sessions yet. Check the coin with Binance below, then start one.</Empty>}
       <div className="session-grid">
         {liveSessions.map((s) => {
           const total = Number(s.equity ?? s.balance) - Number(s.startBalance ?? 0);
@@ -83,8 +119,8 @@ function LiveSessions() {
               <Link to={`/sessions/${s.sessionId}`} className="session-link">
                 <div className="session-top">
                   <div>
-                    <div className="session-symbol">{s.symbol} <EnvBadge env={s.exchangeEnv} /></div>
-                    <div className="muted small">{s.interval} · {s.leverage}x · {s.profile}{s.minJevProb != null ? ` · JEV ≥${s.minJevProb}%` : ""} · {shortId(s.sessionId)}</div>
+                    <div className="session-symbol">{s.symbol}</div>
+                    <div className="muted small">key <b>{s.credentialName ?? "—"}</b> · {s.interval} · {s.leverage}x · {s.profile}{s.minJevProb != null ? ` · JEV ≥${s.minJevProb}%` : ""} · {shortId(s.sessionId)}</div>
                   </div>
                   <div className="col-end"><StateBadge state={s.state} status={s.status} /><SideBadge side={s.side} /></div>
                 </div>
@@ -106,7 +142,7 @@ function LiveSessions() {
                 <span className="muted small">started {ago(s.startedAt)}</span>
                 {s.status === "RUNNING" ? (
                   <button className="btn small ghost" disabled={busy === s.sessionId}
-                    onClick={() => { if (confirm(`Stop live ${s.symbol}?${s.position ? " Its position will be CLOSED ON BINANCE at market." : ""}`)) act(s.sessionId, () => stopSession(s.sessionId)); }}>Stop</button>
+                    onClick={() => { if (confirm(`Stop ${env === "testnet" ? "demo" : "LIVE"} ${s.symbol}?${s.position ? " Its position will be CLOSED ON BINANCE at market." : ""}`)) act(s.sessionId, () => stopSession(s.sessionId)); }}>Stop</button>
                 ) : (
                   <button className="btn small" disabled={busy === s.sessionId} onClick={() => act(s.sessionId, () => resumeSession(s.sessionId))}>Resume</button>
                 )}
@@ -120,9 +156,9 @@ function LiveSessions() {
 }
 
 function AccountCard() {
-  const { account, accountError } = useLive();
+  const { account, accountError, env } = useLive();
   return (
-    <Card title="Binance account">
+    <Card title={`Binance ${env === "testnet" ? "demo" : "live"} account`}>
       <ErrorBox>{accountError}</ErrorBox>
       {!account && !accountError && <Empty>No account access yet (API keys not set or not valid).</Empty>}
       {account && (
@@ -153,9 +189,9 @@ function AccountCard() {
 }
 
 function StartLiveCard() {
-  const { status, preflight, startLive } = useLive();
+  const { status, preflight, startLive, selected, env } = useLive();
   const max = status.limits;
-  const mainnet = status.environment === "mainnet";
+  const mainnet = env === "mainnet";
   const levels = [1, 2, 3, 5, 10, 20].filter((l) => l <= max.maxLeverage);
   const [f, setF] = useState({ symbol: "ETHUSDT", interval: "15m", profile: "balanced", leverage: Math.min(3, max.maxLeverage), budget: 50, targetRR: 1.5, minJevProb: 40 });
   const [pre, setPre] = useState(null);
@@ -187,7 +223,7 @@ function StartLiveCard() {
   const canStart = status.ready && pre?.feasible && (!mainnet || typed === "REAL MONEY");
 
   return (
-    <Card title="Start a live session">
+    <Card title={`Start a ${mainnet ? "live" : "demo"} session on “${selected?.name ?? ""}”`}>
       <form className="form" onSubmit={start}>
         <div className="form-grid">
           <label>Symbol<input value={f.symbol} onChange={set("symbol")} required /></label>
@@ -223,7 +259,7 @@ function StartLiveCard() {
         {done && <p className="up small">Started — <Link to={`/sessions/${done}`}>open session {shortId(done)}</Link></p>}
         <div className="form-actions">
           <button className={`btn ${mainnet ? "danger" : "primary"}`} disabled={!canStart || busy}>
-            {busy ? "Working…" : `2. Start live session on ${status.environment}`}
+            {busy ? "Working…" : `2. Start ${mainnet ? "LIVE (real money)" : "demo"} session`}
           </button>
         </div>
         {!status.ready && <p className="small muted">Starting is disabled until the problems above are fixed.</p>}
@@ -233,7 +269,7 @@ function StartLiveCard() {
 }
 
 function SafetyCard() {
-  const { status, reconcile, kill } = useLive();
+  const { status, reconcile, kill, env } = useLive();
   const [rec, setRec] = useState(null);
   const [killed, setKilled] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -243,11 +279,11 @@ function SafetyCard() {
   return (
     <Card title="Safety">
       <div className="kv">
-        <span>Max live sessions</span><b>{l.maxSessions}</b>
+        <span>Max sessions per key</span><b>{l.maxSessions}</b>
         <span>Max leverage</span><b>{l.maxLeverage}x</b>
         <span>Max budget per session</span><b>{usd(l.maxBudgetUsdPerSession, 0)}</b>
         <span>Max position per trade</span><b>{usd(l.maxNotionalUsdPerTrade, 0)}</b>
-        <span>Daily loss limit (all live)</span><b>{usd(l.dailyLossUsd, 0)}</b>
+        <span>Daily loss limit ({env === "testnet" ? "all demo" : "all live"})</span><b>{usd(l.dailyLossUsd, 0)}</b>
         <span>Stops</span><b>on Binance (work if the bot is down)</b>
       </div>
       <div className="row gap">
@@ -258,10 +294,10 @@ function SafetyCard() {
 
       <div className="danger-zone">
         <b>Kill switch</b>
-        <p className="small muted">Stops every live session, closes their positions at market on Binance and cancels their orders.</p>
+        <p className="small muted">Stops every {env === "testnet" ? "demo" : "live"} session, closes their positions at market on Binance and cancels their orders.</p>
         <button className="btn danger" disabled={busy}
-          onClick={() => { if (prompt('Type KILL to stop all live trading and close positions') === "KILL") run(kill, setKilled); }}>
-          Stop all live trading
+          onClick={() => { if (prompt(`Type KILL to stop all ${env === "testnet" ? "demo" : "LIVE"} sessions and close their positions`) === "KILL") run(kill, setKilled); }}>
+          Stop all {env === "testnet" ? "demo" : "live"} sessions
         </button>
         {killed && <p className="small">{killed.stopped.length} session(s) stopped{killed.leftovers.length ? `, ${killed.leftovers.length} leftover position(s) closed` : ""}{killed.errors.length ? ` — errors: ${killed.errors.join("; ")}` : ""}</p>}
       </div>

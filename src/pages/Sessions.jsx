@@ -91,7 +91,10 @@ export default function Sessions() {
   return (
     <div className="page">
       <div className="page-head">
-        <h1>Sessions</h1>
+        <div>
+          <h1>Internal sessions</h1>
+          <p className="muted small">Paper trading inside the bot — simulated fills with Binance prices and costs.</p>
+        </div>
         <div className="row gap">
           <label className="check"><input type="checkbox" checked={showStopped} onChange={(e) => setShowStopped(e.target.checked)} /> show stopped</label>
           <button className="btn primary" onClick={() => setShowForm((v) => !v)}>{showForm ? "Close" : "+ New session"}</button>

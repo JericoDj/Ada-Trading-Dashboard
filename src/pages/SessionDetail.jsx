@@ -24,11 +24,11 @@ export default function SessionDetail() {
 
   return (
     <div className="page">
-      <Link to={session.mode === "live" ? "/live" : "/"} className="muted small">← {session.mode === "live" ? "live trading" : "all sessions"}</Link>
+      <Link to={session.mode !== "live" ? "/" : session.exchangeEnv === "mainnet" ? "/live" : "/demo"} className="muted small">← {session.mode !== "live" ? "internal sessions" : session.exchangeEnv === "mainnet" ? "live sessions" : "demo sessions"}</Link>
       <div className="page-head">
         <h1>
           {session.symbol} <span className="muted">{session.interval} · {session.leverage}x</span>
-          {session.mode === "live" && <span className={`env-badge ${session.exchangeEnv ?? "testnet"}`}>LIVE · {session.exchangeEnv === "mainnet" ? "real money" : "testnet"}</span>}
+          {session.mode === "live" && <span className={`env-badge ${session.exchangeEnv ?? "testnet"}`}>{session.exchangeEnv === "mainnet" ? "LIVE · real money" : "DEMO · testnet"}</span>}
         </h1>
         <div className="row gap">
           <StateBadge state={status?.state ?? session.state} status={session.status} />
